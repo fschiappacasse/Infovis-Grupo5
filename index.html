@@ -1,32 +1,84 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Military Expenditure as Percentage of GDP</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  
-
+  <meta charset="utf-8" />
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <style>
+    body {
+      font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial
+    }
+  </style>
 </head>
+
 <body>
-      <script src="https://app.protobject.com/framework/p.js"></script>
-    <script src="config.js"></script>
-   <h1>Military Expenditure by % of GDP</h1>
-  <link rel="stylesheet" href="style.css" />
-    <!-- Slider for Year Selection -->
-    <div id="slider-container">
-        <label for="yearRange">Year</label>
-        <input type="range" min="1960" max="2018" value="2018" id="yearRange">
-      <span id="yearLabel">2018</span>
-    </div>
+  <div id="chart" style="max-width:1000px;height:600px;margin:auto;"></div>
+  <script>
+    const files = {
+      "Argentina": "data/ar_trap_monthly_counts.csv",
+      "Chile": "data/cl_trap_monthly_counts.csv",
+      "Perú": "data/pe_trap_monthly_counts.csv",
+      "Uruguay": "data/ur_trap_monthly_counts.csv",
+      "Colombia": "data/col_trap_monthly_counts.csv"
+    };
 
-    <div id="map"></div>
-    
+    const COLORS = {
+      "Chile": "#d32f2f", // rojo
+      "Argentina": "#6ec6ff", // celeste
+      "Uruguay": "#1f77b4", // azul
+      "Perú": "#2ecc71", // verde
+      "Colombia": "#f1c40f"  // amarillo
+    };
 
-    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="script.js"></script>
+    function ymToDate(y, m) { return new Date(+y, +m - 1, 1); }
 
+    async function loadCSV(url) {
+      const text = await fetch(url).then(r => r.text());
+      const rows = text.trim().split(/\r?\n/).map(r => r.split(","));
+      const hdr = rows.shift().map(s => s.trim().toLowerCase());
+      const yi = hdr.indexOf("year"), mi = hdr.indexOf("month"), pi = hdr.indexOf("pct_trap_avg");
+      return rows.map(r => ({ date: ymToDate(r[yi], r[mi]), pct: +r[pi] }))
+        .filter(d => d.date >= new Date(2017, 0, 1) && d.date < new Date(2022, 0, 1))
+        .sort((a, b) => a.date - b.date);
+    }
 
+    (async () => {
+      const traces = [];
+      for (const [country, path] of Object.entries(files)) {
+        const data = await loadCSV(path);
+        const color = COLORS[country] || "#444";
+        traces.push({
+          name: country,
+          x: data.map(d => d.date),
+          y: data.map(d => d.pct),
+          mode: "lines",
+          line: { color, width: 2 },
+          hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
+        });
+
+        const first = data[0], last = data[data.length - 1];
+        if (first && last) {
+          traces.push({
+            name: country + " (2017/2021)",
+            x: [first.date, last.date],
+            y: [first.pct, last.pct],
+            mode: "markers",
+            marker: { size: 6, line: { width: 1, color }, color },
+            showlegend: false,
+            hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
+          });
+        }
+      }
+
+      Plotly.newPlot("chart", traces, {
+        title: "% de canciones trap en el Top 50 — mensual (2017–2021)",
+        xaxis: { title: "", tickformat: "%Y", dtick: "M12", range: [new Date(2017, 0, 1), new Date(2021, 11, 31)] },
+        yaxis: { title: "% Canciones trap", rangemode: "tozero", tickformat: ".0f", ticksuffix: "%" },
+        legend: { orientation: "h", x: 0.5, y: -0.2, xanchor: "center" },
+        margin: { l: 60, r: 20, t: 60, b: 50 }
+      }, { responsive: true });
+    })();
+  </script>
 </body>
+
 </html>
