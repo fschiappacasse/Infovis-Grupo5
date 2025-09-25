@@ -60,76 +60,63 @@
           x: data.map(d => d.date),
           y: data.map(d => d.pct),
           mode: "lines",
-          showlegend: false, 
-           
           line: { color, width: 2 },
-          //hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
+          opacity: 0.95,
+          showlegend: false,
         });
 
         const first = data[0], last = data[data.length - 1];
         if (first && last) {
           traces.push({
-            
+
             hoverinfo: "skip",
             name: country + " (2017/2021)",
             x: [first.date, last.date],
             y: [first.pct, last.pct],
             mode: "markers",
             marker: { size: 3, line: { width: 2, color }, color },
-            showlegend: false,  
-            //hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
+            showlegend: false,
           });
 
           traces.push({
             name: country,
-            x: [null],  
+            x: [null],
             y: [null],
             mode: "lines",
-            line: { color, width: 3 },   // solo afecta la leyenda
+            line: { color, width: 3 },
             showlegend: true
           });
-
-          // /* anotaciones al lado
-          // annotations.push({
-          // x: last.date,
-          // y: last.pct,
-          // xanchor: "left",   
-          // yanchor: "middle",
-          // text: country,
-          // font: { color, size: 12, family: "Segoe UI, Arial, sans-serif" },
-          // showarrow: false,
-          // xshift: 6  
-          // });
-          // */
-
-          
+        }
+        if (country === "Chile" && data.length) {
+          const peak = data.reduce((a, b) => (b.pct > a.pct ? b : a), data[0]);
+          annotations.push({
+            x: peak.date, y: peak.pct,
+            xref: "x", yref: "y",
+            xanchor: "left", yanchor: "bottom",
+            text: `Un ${peak.pct.toFixed(1)}% del top 50 de Chile en Marzo 2020 fue musica trap`,
+            font: { color, size: 12 },
+            showarrow: true, arrowcolor: color, ax: 20, ay: -30,
+            bgcolor: "rgba(255,255,255,0.85)", bordercolor: color
+          });
         }
       }
-      
 
-      Plotly.newPlot("chart", traces, {  showlegend: true,
+      Plotly.newPlot("chart", traces, {
+        showlegend: true,
         hoverinfo: "skip",
         title: {
-          text: "Evolución de la popularidad del trap en Chile entre 2017-2021",
-          font: { size: 22, family: "Segoe UI Bold, Arial, sans-serif", color: "#111"  }
+          text:
+            "Evolución de la popularidad del trap en Chile entre 2017 – 2021" +
+            "<br><span style='font-size:14px; color:#555; font-weight:400;'>Porcentaje de canciones de trap en el Top 50 mensual de Spotify en distintos paises de latinoamérica</span>",
+          x: 0.5,
+          xanchor: "center",
+          font: { size: 22, family: "Segoe UI Bold, Arial, sans-serif", color: "#111" }
         },
-        annotations: [
-          {
-            text: "Porcentaje de canciones de trap en el Top 50 de Spotify",
-            xref: "paper",
-            yref: "paper",
-            x: 0.5,
-            y: 1.07,      
-            xanchor: "center",
-            showarrow: false,
-            font: { size: 14, color: "#555", family: "Segoe UI, Arial, sans-serif" }
-          },
-          ...annotations
-        ],
-        xaxis: { title: "", tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2022, 1, 28)],   },
-        yaxis: { title: {text: "Porcentaje canciones de trap", standoff: 200 }, rangemode: "tozero", tickformat: ".0f", ticksuffix: "%",  range: [-2, null]  },
+        annotations: [...annotations],
+        xaxis: { title: "", tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2022, 1, 28)], },
+        yaxis: { title: { text: "Porcentaje canciones de trap", standoff: 200 }, range: [0, 80], tickformat: ".0f", ticksuffix: "%" },
         legend: { orientation: "h", x: 0.5, y: -0.2, xanchor: "center", itemclick: false, itemdoubleclick: false },
-        margin: { l: 80, r: 20, t: 100, b: 50 } 
+        margin: { l: 80, r: 80, t: 100, b: 110 }
       }, { responsive: true });
     })();
 
