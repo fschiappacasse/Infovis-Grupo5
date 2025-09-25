@@ -114,7 +114,7 @@
         },
         annotations: [...annotations],
         xaxis: { title: "", tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2022, 1, 28)], },
-        yaxis: { title: { text: "Porcentaje canciones de trap", standoff: 200 }, range: [0, 100], tickformat: ".0f", ticksuffix: "%" },
+        yaxis: { title: { text: "Porcentaje canciones de trap", standoff: 200 }, range: [0, 100], tickmode: "linear", tick0: 0, dtick: 10, tickformat: ".0f", ticksuffix: "%" },
         legend: { orientation: "h", x: 0.5, y: -0.2, xanchor: "center", itemclick: false, itemdoubleclick: false },
         margin: { l: 80, r: 80, t: 100, b: 110 }
       }, { responsive: true });
