@@ -12,7 +12,7 @@
 </head>
 
 <body>
-  <div id="chart" style="max-width:1000px;height:600px;margin:auto;"></div>
+  <div id="chart" style="max-width:1000px;height:600px;margin:auto;margin-top:6%;"></div>
   <script>
     const files = {
       "Argentina": "data/ar_trap_monthly_counts.csv",
@@ -23,11 +23,11 @@
     };
 
     const COLORS = {
-      "Chile": "#d32f2f", // rojo
-      "Argentina": "#6ec6ff", // celeste
-      "Uruguay": "#1f77b4", // azul
-      "Perú": "#2ecc71", // verde
-      "Colombia": "#f1c40f"  // amarillo
+      "Chile": "#ff4757", // rojo
+      "Argentina": "#1e90ff", // celeste
+      "Uruguay": "#3742fa", // azul
+      "Perú": "#2ed573", // verde
+      "Colombia": "#ffa502"  // amarillo
     };
 
     function ymToDate(y, m) { return new Date(+y, +m - 1, 1); }
@@ -48,36 +48,56 @@
         const data = await loadCSV(path);
         const color = COLORS[country] || "#444";
         traces.push({
+          hoverinfo: "skip",
           name: country,
           x: data.map(d => d.date),
           y: data.map(d => d.pct),
           mode: "lines",
           line: { color, width: 2 },
-          hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
+          //hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
         });
 
         const first = data[0], last = data[data.length - 1];
         if (first && last) {
           traces.push({
+            
+            hoverinfo: "skip",
             name: country + " (2017/2021)",
             x: [first.date, last.date],
             y: [first.pct, last.pct],
             mode: "markers",
-            marker: { size: 6, line: { width: 1, color }, color },
+            marker: { size: 4, line: { width: 2, color }, color },
             showlegend: false,
-            hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
+            //hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
           });
         }
       }
 
-      Plotly.newPlot("chart", traces, {
-        title: "% de canciones trap en el Top 50 — mensual (2017–2021)",
-        xaxis: { title: "", tickformat: "%Y", dtick: "M12", range: [new Date(2017, 0, 1), new Date(2021, 11, 31)] },
-        yaxis: { title: "% Canciones trap", rangemode: "tozero", tickformat: ".0f", ticksuffix: "%" },
-        legend: { orientation: "h", x: 0.5, y: -0.2, xanchor: "center" },
-        margin: { l: 60, r: 20, t: 60, b: 50 }
+      Plotly.newPlot("chart", traces, { 
+        hoverinfo: "skip",
+        title: {
+          text: "Evolución de la popularidad del trap entre 2017-2021",
+          font: { size: 22, family: "Segoe UI Bold, Arial, sans-serif", color: "#111"  }
+        },
+        annotations: [
+          {
+            text: "Porcentaje de canciones de trap en el Top 50 de Spotify",
+            xref: "paper",
+            yref: "paper",
+            x: 0.5,
+            y: 1.07,      
+            xanchor: "center",
+            showarrow: false,
+            font: { size: 14, color: "#555", family: "Segoe UI, Arial, sans-serif" }
+          }
+        ],
+        xaxis: { title: "", tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2021, 11, 31)],   },
+        yaxis: { title: {text: "Porcentaje canciones de trap", standoff: 200 }, rangemode: "tozero", tickformat: ".0f", ticksuffix: "%",  range: [-2, null]  },
+        legend: { orientation: "h", x: 0.5, y: -0.2, xanchor: "center", itemclick: false, itemdoubleclick: false },
+        margin: { l: 80, r: 20, t: 100, b: 50 } 
       }, { responsive: true });
     })();
+
   </script>
 </body>
 
