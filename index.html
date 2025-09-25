@@ -16,18 +16,24 @@
   <script>
     const files = {
       "Argentina": "data/ar_trap_monthly_counts.csv",
-      "Chile": "data/cl_trap_monthly_counts.csv",
       "Perú": "data/pe_trap_monthly_counts.csv",
       "Uruguay": "data/ur_trap_monthly_counts.csv",
-      "Colombia": "data/col_trap_monthly_counts.csv"
+      "Colombia": "data/col_trap_monthly_counts.csv",
+      "Chile": "data/cl_trap_monthly_counts.csv"
     };
 
     const COLORS = {
-      "Chile": "#ff4757", // rojo
-      "Argentina": "#1e90ff", // celeste
-      "Uruguay": "#3742fa", // azul
-      "Perú": "#2ed573", // verde
-      "Colombia": "#ffa502"  // amarillo
+      //"Chile": "#ff4757", // rojo
+      //"Argentina": "#999999", // celeste
+      //"Uruguay": "#bbbbbb", // azul
+      //"Perú": "#aaaaaa", // verde
+      //"Colombia": "#666666"  // amarillo
+
+      "Chile": "#f67278", // rojo
+      "Argentina": "#dbcdf0", // celeste
+      "Uruguay": "#c6def1", // azul
+      "Perú": "#c9e4de", // verde
+      "Colombia": "#faedcb"  // amarillo
     };
 
     function ymToDate(y, m) { return new Date(+y, +m - 1, 1); }
@@ -43,6 +49,7 @@
     }
 
     (async () => {
+      const annotations = [];
       const traces = [];
       for (const [country, path] of Object.entries(files)) {
         const data = await loadCSV(path);
@@ -53,6 +60,8 @@
           x: data.map(d => d.date),
           y: data.map(d => d.pct),
           mode: "lines",
+          showlegend: false, 
+           
           line: { color, width: 2 },
           //hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
         });
@@ -66,17 +75,42 @@
             x: [first.date, last.date],
             y: [first.pct, last.pct],
             mode: "markers",
-            marker: { size: 4, line: { width: 2, color }, color },
-            showlegend: false,
+            marker: { size: 3, line: { width: 2, color }, color },
+            showlegend: false,  
             //hovertemplate: "%{x|%b %Y}<br>%{y:.2f}% trap<extra>" + country + "</extra>"
           });
+
+          traces.push({
+            name: country,
+            x: [null],  
+            y: [null],
+            mode: "lines",
+            line: { color, width: 3 },   // solo afecta la leyenda
+            showlegend: true
+          });
+
+          // /* anotaciones al lado
+          // annotations.push({
+          // x: last.date,
+          // y: last.pct,
+          // xanchor: "left",   
+          // yanchor: "middle",
+          // text: country,
+          // font: { color, size: 12, family: "Segoe UI, Arial, sans-serif" },
+          // showarrow: false,
+          // xshift: 6  
+          // });
+          // */
+
+          
         }
       }
+      
 
-      Plotly.newPlot("chart", traces, { 
+      Plotly.newPlot("chart", traces, {  showlegend: true,
         hoverinfo: "skip",
         title: {
-          text: "Evolución de la popularidad del trap entre 2017-2021",
+          text: "Evolución de la popularidad del trap en Chile entre 2017-2021",
           font: { size: 22, family: "Segoe UI Bold, Arial, sans-serif", color: "#111"  }
         },
         annotations: [
@@ -89,9 +123,10 @@
             xanchor: "center",
             showarrow: false,
             font: { size: 14, color: "#555", family: "Segoe UI, Arial, sans-serif" }
-          }
+          },
+          ...annotations
         ],
-        xaxis: { title: "", tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2021, 11, 31)],   },
+        xaxis: { title: "", tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2022, 1, 28)],   },
         yaxis: { title: {text: "Porcentaje canciones de trap", standoff: 200 }, rangemode: "tozero", tickformat: ".0f", ticksuffix: "%",  range: [-2, null]  },
         legend: { orientation: "h", x: 0.5, y: -0.2, xanchor: "center", itemclick: false, itemdoubleclick: false },
         margin: { l: 80, r: 20, t: 100, b: 50 } 
