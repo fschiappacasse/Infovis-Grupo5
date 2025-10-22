@@ -46,7 +46,7 @@
     "Argentina": "data/ar_top10_trap.csv",
     "Perú": "data/pe_top10_trap.csv",
     "Uruguay": "data/ur_top10_trap.csv",
-    "Colombia": "data/co_top10_trap.csv",
+    "Colombia": "data/col_top10_trap.csv",
     "Chile": "data/cl_top10_trap.csv"
   };
 
@@ -184,7 +184,6 @@
     (async () => {
       const annotations = [];
       const traces = [];
-
       for (const [country, path] of Object.entries(files)) {
         const data = await loadCSV(path);
         const color = COLORS[country] || "#444";
@@ -249,9 +248,45 @@
         showlegend: false
       });
 
+function darkenColor(hex, factor = 0.5) {
+  // Convierte "#RRGGBB" a RGB y lo oscurece
+  const r = Math.floor(parseInt(hex.substr(1,2),16) * factor);
+  const g = Math.floor(parseInt(hex.substr(3,2),16) * factor);
+  const b = Math.floor(parseInt(hex.substr(5,2),16) * factor);
+  return `rgb(${r},${g},${b})`;
+}
+
+const yOffsets = {
+  "Chile": 0,
+  "Argentina": 10,
+  "Uruguay": -10,
+  "Perú": 0,
+  "Colombia": 0
+};
+
+const countryAnnotations = traces
+  .filter(trace => trace.mode === "lines" && trace.x.length && trace.x[0] !== null)
+  .map((trace, i) => {
+    const lastIndex = trace.x.length - 1;
+    return {
+      x: trace.x[lastIndex],
+      y: trace.y[lastIndex],
+      xref: 'x',
+      yref: 'y',
+      text: trace.name,
+      showarrow: false,
+      font: { color: darkenColor(trace.line.color, 0.7), size: 12 }, // más oscuro
+      xanchor: 'left',
+      yanchor: 'middle',
+      yshift: yOffsets[trace.name] || 0,  // desplazamiento individual
+      xshift: 5,
+    };
+  });
+
+
 
       await Plotly.newPlot("chart", traces, {
-        showlegend: true,
+        showlegend: false,
         hoverinfo: "skip",
         title: {
           text:
@@ -261,8 +296,8 @@
           xanchor: "center",
           font: { size: 22, family: "Segoe UI Bold, Arial, sans-serif", color: "#111" }
         },
-        annotations: [...annotations],
-        xaxis: { tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2022, 1, 28)] },
+        annotations: [...annotations, ...countryAnnotations],
+        xaxis: { title: { text: "Año", standoff: 200 },tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2022, 1, 28)] },
         yaxis: { title: { text: "Porcentaje canciones de trap", standoff: 200 }, range: [0, 100], tickmode: "linear", tick0: 0, dtick: 10, tickformat: ".0f", ticksuffix: "%" },
         legend: { orientation: "h", x: 0.5, y: -0.05, xanchor: "center", itemclick: false, itemdoubleclick: false },
         margin: { l: 80, r: 80, t: 100, b: 30 }
