@@ -13,38 +13,130 @@
 </head>
 
 <body>
-  <div id="chart" style="max-width:1000px;height:600px;margin:auto;margin-top:6%;"></div>
+  <div style="display: flex; gap: 20px; align-items: flex-start; margin-top: 2%; margin-left: 3%; margin-right: auto; max-width:90%;">
+  
+  <!-- Gráfico -->
+  <div id="chart" style="flex: 0 0 70%; height: 600px; border: 1px solid #ccc;"></div>
 
-  <div id="sonic" style="max-width:1000px;margin:24px auto 0;">
-    <h3 style="margin:0 0 8px">Sonificación</h3>
-    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-      <div>
-        <label style="font-weight:600">Países:</label><br>
-        <select id="countryOrder" multiple size="5" style="min-width:220px">
-          <option value="Chile" selected>Chile</option>
-          <option value="Argentina" selected>Argentina</option>
-          <option value="Uruguay" selected>Uruguay</option>
-          <option value="Perú" selected>Perú</option>
-          <option value="Colombia" selected>Colombia</option>
-        </select>
-        <div style="font-size:12px;color:#666;">(Mantén Ctrl/⌘ para seleccionar; el orden de selección se respeta)</div>
-      </div>
+  <!-- Selector y top 5 -->
+  <div style="flex: 0 0 30%; padding: 12px; border: 1px solid #ccc;">
+    <h2 style="margin-top:0; font-weight: normal;">Ver el top 5 histórico de canciones de trap </h2>
+    <h5 style="margin-top:0; font-weight: normal;">Selecciona un país</h5>
+    <select id="countrySelector" style="width: 100%; padding: 6px; font-size: 14px; margin-bottom: 16px;">
+      <option value="Chile">Chile</option>
+      <option value="Argentina">Argentina</option>
+      <option value="Uruguay">Uruguay</option>
+      <option value="Perú">Perú</option>
+      <option value="Colombia">Colombia</option>
+    </select>
 
-      <div>
-        <label for="tempo" style="font-weight:600">Tempo (notas/seg):</label><br>
-        <input id="tempo" type="number" value="3" min="1" max="8" step="1" style="width:80px">
-      </div>
+    
+    <ul id="top5List" style="list-style: none; padding-left: 0; margin: 0;"></ul>
 
-      <div>
-        <label for="vol" style="font-weight:600">Volumen:</label><br>
-        <input id="vol" type="range" min="-30" max="0" step="1" value="-10">
-      </div>
 
-      <div style="display:flex;gap:8px;align-items:end">
-        <button id="playBtn">▶️ Reproducir secuencia</button>
-        <button id="stopBtn">⏹️ Stop</button>
-      </div>
-    </div>
+  </div>
+
+</div>
+
+<ul id="top5List" style="list-style: none; padding-left: 0; margin: 0;"></ul>
+
+
+<script>
+  const files2 = {
+    "Argentina": "data/ar_top10_trap.csv",
+    "Perú": "data/pe_top10_trap.csv",
+    "Uruguay": "data/ur_top10_trap.csv",
+    "Colombia": "data/co_top10_trap.csv",
+    "Chile": "data/cl_top10_trap.csv"
+  };
+
+  async function loadTop5CSV(country) {
+    const url = files2[country];
+    const text = await fetch(url).then(r => r.text());
+
+    const rows = text.trim().split(/\r?\n/).map(r => r.split(";"));
+    const headers = rows.shift().map(h => h.trim().toLowerCase());
+
+    const titleIndex = headers.indexOf("title");
+    const artistIndex = headers.indexOf("artist");
+    const dateIndex = headers.indexOf("date");
+
+    const top5 = rows.slice(0, 5);
+
+    const list = document.getElementById("top5List");
+    list.innerHTML = "";
+
+    top5.forEach((row, idx) => {
+      let year;
+      const date = row[dateIndex].trim();
+
+      if (country === "Argentina") {
+        year = date.split("-")[2]; // DD-MM-AAAA
+      } else {
+        year = date.split("-")[0]; // AAAA-MM-DD
+      }
+
+      const li = document.createElement("li");
+      li.style.marginBottom = "8px"; // espacio entre tops
+      li.innerHTML = `${idx + 1}) <strong>${row[titleIndex]}</strong> (${year}) — ${row[artistIndex]}`;
+      list.appendChild(li);
+    });
+  }
+
+  const selector = document.getElementById("countrySelector");
+  selector.addEventListener("change", (e) => loadTop5CSV(e.target.value));
+
+  loadTop5CSV("Chile");
+</script>
+
+
+
+
+  <div id="sonic" style="max-width:60%;;margin:24px auto 0;margin-left:3%;">
+    <h2 style="margin-top:0; font-weight: normal;">Sonificación</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; margin-top: 16px; font-family: Arial, sans-serif;">
+
+  <!-- Selector de país -->
+  <div style="flex: 0 0 auto;">
+    <h5 style="margin: 0 0 6px 0; font-weight: normal;">Selecciona un país</h5>
+    <select id="countryOrder"
+      style="min-width: 220px; width: 100%; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; background-color: #fff;">
+      <option value="Chile" selected>Chile</option>
+      <option value="Argentina">Argentina</option>
+      <option value="Uruguay">Uruguay</option>
+      <option value="Perú">Perú</option>
+      <option value="Colombia">Colombia</option>
+    </select>
+  </div>
+
+  <!-- Control de tempo -->
+  <div style="flex: 0 0 auto;">
+    <h5 style="margin: 0 0 6px 0; font-weight: normal;">Tempo (notas/seg)</h5>
+    <input id="tempo" type="number" value="3" min="1" max="8" step="1"
+      style="width: 90px; padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;">
+  </div>
+
+  <!-- Control de volumen -->
+  <div style="flex: 0 0 auto;">
+    <h5 style="margin: 0 0 6px 0; font-weight: normal;">Volumen</h5>
+    <input id="vol" type="range" min="-30" max="0" step="1" value="-10"
+      style="width: 120px; accent-color: #444;">
+  </div>
+
+  <!-- Botones -->
+  <div style="display: flex; gap: 10px; align-items: center; flex: 0 0 auto;">
+    <button id="playBtn"
+      style="padding: 8px 14px; background-color: #000000; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+      ▶ Reproducir
+    </button>
+    <button id="stopBtn"
+      style="padding: 8px 14px; background-color: #000000; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+      ⏹ Detener
+    </button>
+  </div>
+
+</div>
+
     <div id="nowPlaying" style="margin-top:8px;color:#555;"></div>
   </div>
 
@@ -136,7 +228,7 @@
             xanchor: "left", yanchor: "bottom",
             text: `Un ${peak.pct.toFixed(1)}% del top 50 de Chile en Marzo 2020 fue música trap`,
             font: { color, size: 12 },
-            showarrow: true, arrowcolor: color, ax: 20, ay: -30,
+            showarrow: true, arrowcolor: color, ax: -120, ay: -50,
             bgcolor: "rgba(255,255,255,0.85)", bordercolor: color
           });
         }
@@ -172,8 +264,8 @@
         annotations: [...annotations],
         xaxis: { tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2022, 1, 28)] },
         yaxis: { title: { text: "Porcentaje canciones de trap", standoff: 200 }, range: [0, 100], tickmode: "linear", tick0: 0, dtick: 10, tickformat: ".0f", ticksuffix: "%" },
-        legend: { orientation: "h", x: 0.5, y: -0.2, xanchor: "center", itemclick: false, itemdoubleclick: false },
-        margin: { l: 80, r: 80, t: 100, b: 110 }
+        legend: { orientation: "h", x: 0.5, y: -0.05, xanchor: "center", itemclick: false, itemdoubleclick: false },
+        margin: { l: 80, r: 80, t: 100, b: 30 }
       }, { responsive: true });
 
 
@@ -242,7 +334,7 @@
 
     async function playCountrySeries(country, series, notesPerSec, pctToFreq) {
       const msPerNote = 1000 / notesPerSec;
-      nowPlaying.textContent = `▶ Reproduciendo: ${country} (${series.length} meses)`;
+      nowPlaying.textContent = `▶ Reproduciendo: ${country} `;
       const color = (COLORS && COLORS[country]) || "#444";
 
       for (let i = 0; i < series.length; i++) {
