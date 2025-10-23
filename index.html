@@ -13,130 +13,96 @@
 </head>
 
 <body>
-  <div style="display: flex; gap: 20px; align-items: flex-start; margin-top: 2%; margin-left: 3%; margin-right: auto; max-width:90%;">
-  
-  <!-- Gráfico -->
-  <div id="chart" style="flex: 0 0 70%; height: 600px; border: 1px solid #ccc;"></div>
+  <div style="display:flex;gap:20px;align-items:flex-start;margin-top:2%;margin-left:3%;max-width:90%;">
+    <!-- Gráfico -->
+    <div id="chart" style="flex:0 0 70%;height:600px;border:1px solid #ccc;"></div>
 
-  <!-- Selector y top 5 -->
-  <div style="flex: 0 0 30%; padding: 12px; border: 1px solid #ccc;">
-    <h2 style="margin-top:0; font-weight: normal;">Ver el top 5 histórico de canciones de trap </h2>
-    <h5 style="margin-top:0; font-weight: normal;">Selecciona un país</h5>
-    <select id="countrySelector" style="width: 100%; padding: 6px; font-size: 14px; margin-bottom: 16px;">
-      <option value="Chile">Chile</option>
-      <option value="Argentina">Argentina</option>
-      <option value="Uruguay">Uruguay</option>
-      <option value="Perú">Perú</option>
-      <option value="Colombia">Colombia</option>
-    </select>
-
-    
-    <ul id="top5List" style="list-style: none; padding-left: 0; margin: 0;"></ul>
-
-
+    <!-- Selector y top 5 -->
+    <div style="flex:0 0 30%;padding:12px;border:1px solid #ccc;">
+      <h2 style="margin-top:0;font-weight:normal;">Ver el top 5 histórico de canciones de trap </h2>
+      <h5 style="margin-top:0;font-weight:normal;">Selecciona un país</h5>
+      <select id="countrySelector" style="width:100%;padding:6px;font-size:14px;margin-bottom:16px;">
+        <option value="Chile">Chile</option>
+        <option value="Argentina">Argentina</option>
+        <option value="Uruguay">Uruguay</option>
+        <option value="Perú">Perú</option>
+        <option value="Colombia">Colombia</option>
+      </select>
+      <ul id="top5List" style="list-style:none;padding-left:0;margin:0;"></ul>
+    </div>
   </div>
 
-</div>
+  <ul id="top5List" style="list-style:none;padding-left:0;margin:0;"></ul>
 
-<ul id="top5List" style="list-style: none; padding-left: 0; margin: 0;"></ul>
+  <script>
+    const files2 = {
+      "Argentina": "data/ar_top10_trap.csv",
+      "Perú": "data/pe_top10_trap.csv",
+      "Uruguay": "data/ur_top10_trap.csv",
+      "Colombia": "data/col_top10_trap.csv",
+      "Chile": "data/cl_top10_trap.csv"
+    };
 
+    async function loadTop5CSV(country) {
+      const url = files2[country];
+      const text = await fetch(url).then(r => r.text());
+      const rows = text.trim().split(/\r?\n/).map(r => r.split(";"));
+      const headers = rows.shift().map(h => h.trim().toLowerCase());
+      const titleIndex = headers.indexOf("title");
+      const artistIndex = headers.indexOf("artist");
+      const dateIndex = headers.indexOf("date");
+      const top5 = rows.slice(0, 5);
 
-<script>
-  const files2 = {
-    "Argentina": "data/ar_top10_trap.csv",
-    "Perú": "data/pe_top10_trap.csv",
-    "Uruguay": "data/ur_top10_trap.csv",
-    "Colombia": "data/col_top10_trap.csv",
-    "Chile": "data/cl_top10_trap.csv"
-  };
+      const list = document.getElementById("top5List");
+      list.innerHTML = "";
+      top5.forEach((row, idx) => {
+        let year;
+        const date = row[dateIndex].trim();
+        year = (country === "Argentina") ? date.split("-")[2] : date.split("-")[0];
+        const li = document.createElement("li");
+        li.style.marginBottom = "8px";
+        li.innerHTML = `${idx + 1}) <strong>${row[titleIndex]}</strong> (${year}) — ${row[artistIndex]}`;
+        list.appendChild(li);
+      });
+    }
 
-  async function loadTop5CSV(country) {
-    const url = files2[country];
-    const text = await fetch(url).then(r => r.text());
+    const selector = document.getElementById("countrySelector");
+    selector.addEventListener("change", (e) => loadTop5CSV(e.target.value));
+    loadTop5CSV("Chile");
+  </script>
 
-    const rows = text.trim().split(/\r?\n/).map(r => r.split(";"));
-    const headers = rows.shift().map(h => h.trim().toLowerCase());
-
-    const titleIndex = headers.indexOf("title");
-    const artistIndex = headers.indexOf("artist");
-    const dateIndex = headers.indexOf("date");
-
-    const top5 = rows.slice(0, 5);
-
-    const list = document.getElementById("top5List");
-    list.innerHTML = "";
-
-    top5.forEach((row, idx) => {
-      let year;
-      const date = row[dateIndex].trim();
-
-      if (country === "Argentina") {
-        year = date.split("-")[2]; // DD-MM-AAAA
-      } else {
-        year = date.split("-")[0]; // AAAA-MM-DD
-      }
-
-      const li = document.createElement("li");
-      li.style.marginBottom = "8px"; // espacio entre tops
-      li.innerHTML = `${idx + 1}) <strong>${row[titleIndex]}</strong> (${year}) — ${row[artistIndex]}`;
-      list.appendChild(li);
-    });
-  }
-
-  const selector = document.getElementById("countrySelector");
-  selector.addEventListener("change", (e) => loadTop5CSV(e.target.value));
-
-  loadTop5CSV("Chile");
-</script>
-
-
-
-
-  <div id="sonic" style="max-width:60%;;margin:24px auto 0;margin-left:3%;">
-    <h2 style="margin-top:0; font-weight: normal;">Sonificación</h2>
-    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; margin-top: 16px; font-family: Arial, sans-serif;">
-
-  <!-- Selector de país -->
-  <div style="flex: 0 0 auto;">
-    <h5 style="margin: 0 0 6px 0; font-weight: normal;">Selecciona un país</h5>
-    <select id="countryOrder"
-      style="min-width: 220px; width: 100%; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; background-color: #fff;">
-      <option value="Chile" selected>Chile</option>
-      <option value="Argentina">Argentina</option>
-      <option value="Uruguay">Uruguay</option>
-      <option value="Perú">Perú</option>
-      <option value="Colombia">Colombia</option>
-    </select>
-  </div>
-
-  <!-- Control de tempo -->
-  <div style="flex: 0 0 auto;">
-    <h5 style="margin: 0 0 6px 0; font-weight: normal;">Tempo (notas/seg)</h5>
-    <input id="tempo" type="number" value="3" min="1" max="8" step="1"
-      style="width: 90px; padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;">
-  </div>
-
-  <!-- Control de volumen -->
-  <div style="flex: 0 0 auto;">
-    <h5 style="margin: 0 0 6px 0; font-weight: normal;">Volumen</h5>
-    <input id="vol" type="range" min="-30" max="0" step="1" value="-10"
-      style="width: 120px; accent-color: #444;">
-  </div>
-
-  <!-- Botones -->
-  <div style="display: flex; gap: 10px; align-items: center; flex: 0 0 auto;">
-    <button id="playBtn"
-      style="padding: 8px 14px; background-color: #000000; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-      ▶ Reproducir
-    </button>
-    <button id="stopBtn"
-      style="padding: 8px 14px; background-color: #000000; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-      ⏹ Detener
-    </button>
-  </div>
-
-</div>
-
+  <div id="sonic" style="max-width:60%;margin:24px auto 0;margin-left:3%;">
+    <h2 style="margin-top:0;font-weight:normal;">Sonificación</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;margin-top:16px;">
+      <div>
+        <h5 style="margin:0 0 6px 0;font-weight:normal;">Selecciona un país</h5>
+        <select id="countryOrder"
+          style="min-width:220px;width:100%;padding:8px;font-size:14px;border:1px solid #ccc;border-radius:6px;background:#fff;">
+          <option value="Chile" selected>Chile</option>
+          <option value="Argentina">Argentina</option>
+          <option value="Uruguay">Uruguay</option>
+          <option value="Perú">Perú</option>
+          <option value="Colombia">Colombia</option>
+        </select>
+      </div>
+      <div>
+        <h5 style="margin:0 0 6px 0;font-weight:normal;">Tempo (notas/seg)</h5>
+        <input id="tempo" type="number" value="3" min="1" max="8" step="1"
+          style="width:90px;padding:6px;border:1px solid #ccc;border-radius:6px;font-size:14px;">
+      </div>
+      <div>
+        <h5 style="margin:0 0 6px 0;font-weight:normal;">Volumen</h5>
+        <input id="vol" type="range" min="-30" max="0" step="1" value="-10" style="width:120px;accent-color:#444;">
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button id="playBtn"
+          style="padding:8px 14px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;">▶
+          Reproducir</button>
+        <button id="stopBtn"
+          style="padding:8px 14px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;">⏹
+          Detener</button>
+      </div>
+    </div>
     <div id="nowPlaying" style="margin-top:8px;color:#555;"></div>
   </div>
 
@@ -184,9 +150,12 @@
     (async () => {
       const annotations = [];
       const traces = [];
+
       for (const [country, path] of Object.entries(files)) {
         const data = await loadCSV(path);
         const color = COLORS[country] || "#444";
+
+        // serie principal
         traces.push({
           hoverinfo: "skip",
           name: country,
@@ -233,172 +202,134 @@
         }
       }
 
+      // === Cursor como TRACE de línea (debajo del marcador) ===
+      const CURSOR_TRACE_IDX = traces.length;
+      traces.push({
+        name: "_cursor",
+        x: [new Date(2017, 0, 1), new Date(2017, 0, 1)],
+        y: [0, 100],
+        mode: "lines",
+        line: { width: 2, dash: "dot", color: "#222" },
+        hoverinfo: "skip",
+        showlegend: false
+      });
+
+      // === Marcador de reproducción ===
       const PLAY_MARKER_TRACE = traces.length;
       traces.push({
         name: "_playhead",
         x: [null], y: [null],
         mode: "markers",
-        marker: {
-          size: 14,
-          color: "#111",
-          line: { width: 2, color: "#fff" },
-          opacity: 1
-        },
+        marker: { size: 14, color: "#111", line: { width: 2, color: "#fff" }, opacity: 1 },
         hoverinfo: "skip",
         showlegend: false
       });
 
-function darkenColor(hex, factor = 0.5) {
-  // Convierte "#RRGGBB" a RGB y lo oscurece
-  const r = Math.floor(parseInt(hex.substr(1,2),16) * factor);
-  const g = Math.floor(parseInt(hex.substr(3,2),16) * factor);
-  const b = Math.floor(parseInt(hex.substr(5,2),16) * factor);
-  return `rgb(${r},${g},${b})`;
-}
+      // etiquetas al final de cada serie (opcional, conservadas)
+      function darkenColor(hex, factor = 0.7) {
+        const r = Math.floor(parseInt(hex.substr(1, 2), 16) * factor);
+        const g = Math.floor(parseInt(hex.substr(3, 2), 16) * factor);
+        const b = Math.floor(parseInt(hex.substr(5, 2), 16) * factor);
+        return `rgb(${r},${g},${b})`;
+      }
+      const yOffsets = { "Chile": 0, "Argentina": 10, "Uruguay": -10, "Perú": 0, "Colombia": 0 };
+      const countryAnnotations = traces
+        .filter(tr => tr.mode === "lines" && tr.name && !tr.name.startsWith("_") && tr.x?.length && tr.x[0] !== null)
+        .map(tr => {
+          const last = tr.x.length - 1;
+          return {
+            x: tr.x[last], y: tr.y[last],
+            xref: 'x', yref: 'y', text: tr.name, showarrow: false,
+            font: { color: darkenColor(tr.line.color, 0.7), size: 12 },
+            xanchor: 'left', yanchor: 'middle', yshift: (yOffsets[tr.name] || 0), xshift: 5
+          };
+        });
 
-const yOffsets = {
-  "Chile": 0,
-  "Argentina": 10,
-  "Uruguay": -10,
-  "Perú": 0,
-  "Colombia": 0
-};
-
-const countryAnnotations = traces
-  .filter(trace => trace.mode === "lines" && trace.x.length && trace.x[0] !== null)
-  .map((trace, i) => {
-    const lastIndex = trace.x.length - 1;
-    return {
-      x: trace.x[lastIndex],
-      y: trace.y[lastIndex],
-      xref: 'x',
-      yref: 'y',
-      text: trace.name,
-      showarrow: false,
-      font: { color: darkenColor(trace.line.color, 0.7), size: 12 }, // más oscuro
-      xanchor: 'left',
-      yanchor: 'middle',
-      yshift: yOffsets[trace.name] || 0,  // desplazamiento individual
-      xshift: 5,
-    };
-  });
-
-
-
+      // === Render ===
       await Plotly.newPlot("chart", traces, {
         showlegend: false,
         hoverinfo: "skip",
+        uirevision: "lock",                     /* 👈 evita relayouts pesados */
         title: {
           text:
             "Evolución de la popularidad del trap en Chile entre 2017 – 2021" +
-            "<br><span style='font-size:14px; color:#555; font-weight:400;'>Porcentaje de canciones de trap en el Top 50 mensual de Spotify en distintos países de Latinoamérica</span>",
-          x: 0.5,
-          xanchor: "center",
+            "<br><span style='font-size:14px;color:#555;font-weight:400;'>Porcentaje de canciones de trap en el Top 50 mensual de Spotify en distintos países de Latinoamérica</span>",
+          x: 0.5, xanchor: "center",
           font: { size: 22, family: "Segoe UI Bold, Arial, sans-serif", color: "#111" }
         },
         annotations: [...annotations, ...countryAnnotations],
-        xaxis: { title: { text: "Año", standoff: 200 },tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2022, 1, 28)] },
+        xaxis: { title: { text: "Año", standoff: 200 }, tickformat: "%Y", dtick: "M12", range: [new Date(2016, 11, 11), new Date(2022, 1, 28)] },
         yaxis: { title: { text: "Porcentaje canciones de trap", standoff: 200 }, range: [0, 100], tickmode: "linear", tick0: 0, dtick: 10, tickformat: ".0f", ticksuffix: "%" },
         legend: { orientation: "h", x: 0.5, y: -0.05, xanchor: "center", itemclick: false, itemdoubleclick: false },
         margin: { l: 80, r: 80, t: 100, b: 30 }
       }, { responsive: true });
 
-
-      const CURSOR_COLOR = "#222";
-
-      window.setCursor = function (date) {
-        Plotly.relayout("chart", {
-          shapes: [{
-            type: "line",
-            xref: "x", yref: "paper",
-            x0: date, x1: date,
-            y0: 0, y1: 1,
-            layer: "below",
-            line: { color: CURSOR_COLOR, width: 2, dash: "dot" }
-          }]
-        });
+      // === Helpers: mover/limpiar playhead con UN SOLO restyle ===
+      const gd = document.getElementById("chart");
+      window.movePlayhead = function (date, pct, color) {
+        Plotly.restyle(gd, {
+          x: [[date, date], [date]],   // cursor, marker
+          y: [[0, 100], [pct]],
+          "marker.color": [null, color]
+        }, [CURSOR_TRACE_IDX, PLAY_MARKER_TRACE]);
       };
-
-      window.clearCursor = function () {
-        Plotly.relayout("chart", { shapes: [] });
-      };
-
-      window.setMarker = function (date, pct, color) {
-        Plotly.restyle("chart", {
-          x: [[date]],
-          y: [[pct]],
-          "marker.color": color
-        }, PLAY_MARKER_TRACE);
-      };
-
-      window.clearMarker = function () {
-        Plotly.restyle("chart", { x: [[null]], y: [[null]] }, PLAY_MARKER_TRACE);
+      window.clearPlayhead = function () {
+        Plotly.restyle(gd, { x: [[null, null], [null]], y: [[0, 100], [null]] }, [CURSOR_TRACE_IDX, PLAY_MARKER_TRACE]);
       };
     })();
   </script>
 
-
   <script>
+    // Audio
     const volNode = new Tone.Volume(-10).toDestination();
     const synth = new Tone.Synth({
       oscillator: { type: "triangle" },
       envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.15 }
     }).connect(volNode);
 
-
+    // UI refs
     const playBtn = document.getElementById("playBtn");
     const stopBtn = document.getElementById("stopBtn");
     const volSlider = document.getElementById("vol");
     const tempoInput = document.getElementById("tempo");
     const nowPlaying = document.getElementById("nowPlaying");
 
-
-    volSlider.addEventListener("input", e => {
-      volNode.volume.value = +e.target.value;
-    });
-
+    volSlider.addEventListener("input", e => { volNode.volume.value = +e.target.value; });
 
     let isPlaying = false;
     let stopRequested = false;
 
-
     function getSelectedCountries() {
       const sel = document.getElementById("countryOrder");
-      return Array.from(sel.selectedOptions).map(o => o.value);
+      return [sel.value]; // single-select actual
     }
 
     async function playCountrySeries(country, series, notesPerSec, pctToFreq) {
       const msPerNote = 1000 / notesPerSec;
-      nowPlaying.textContent = `▶ Reproduciendo: ${country} `;
-      const color = (COLORS && COLORS[country]) || "#444";
+      nowPlaying.textContent = `▶ Reproduciendo: ${country}`;
+      const color = COLORS[country] || "#444";
 
       for (let i = 0; i < series.length; i++) {
         if (stopRequested) break;
         const d = series[i];
 
+        // mueve cursor + marcador (un restyle)
+        movePlayhead(d.date, d.pct, color);
 
-        setCursor(d.date);
-        setMarker(d.date, d.pct, color);
-
-
+        // sonido
         const freq = pctToFreq(d.pct);
         synth.triggerAttackRelease(freq, 0.25);
 
         await new Promise(r => setTimeout(r, msPerNote));
       }
 
-
-      clearMarker();
-      clearCursor();
+      clearPlayhead();
     }
-
 
     playBtn.addEventListener("click", async () => {
       if (isPlaying) return;
-      isPlaying = true;
-      stopRequested = false;
-      playBtn.disabled = true;
-      stopBtn.disabled = false;
+      isPlaying = true; stopRequested = false;
+      playBtn.disabled = true; stopBtn.disabled = false;
       nowPlaying.textContent = "Cargando…";
 
       try {
@@ -407,50 +338,37 @@ const countryAnnotations = traces
         const order = getSelectedCountries();
         const tempo = Math.max(1, Math.min(8, +tempoInput.value || 3));
 
-
         const dataByCountry = {};
-        for (const c of order) {
-          dataByCountry[c] = await loadCSV(files[c]);
-        }
-
+        for (const c of order) dataByCountry[c] = await loadCSV(files[c]);
 
         let minPct = +Infinity, maxPct = -Infinity;
-        for (const c of order) {
-          for (const d of dataByCountry[c]) {
-            if (d.pct < minPct) minPct = d.pct;
-            if (d.pct > maxPct) maxPct = d.pct;
-          }
+        for (const c of order) for (const d of dataByCountry[c]) {
+          if (d.pct < minPct) minPct = d.pct;
+          if (d.pct > maxPct) maxPct = d.pct;
         }
         const pctToFreq = makePctToFreq(minPct, maxPct);
-
 
         for (const c of order) {
           if (stopRequested) break;
           await playCountrySeries(c, dataByCountry[c], tempo, pctToFreq);
         }
-
         nowPlaying.textContent = stopRequested ? "⏹ Detenido" : "✅ Secuencia terminada";
       } catch (err) {
         console.error(err);
         nowPlaying.textContent = "⚠️ Error: " + (err?.message || err);
       } finally {
-        isPlaying = false;
-        stopRequested = false;
-        playBtn.disabled = false;
-        stopBtn.disabled = true;
+        isPlaying = false; stopRequested = false;
+        playBtn.disabled = false; stopBtn.disabled = true;
       }
     });
-
 
     stopBtn.addEventListener("click", () => {
       if (!isPlaying) return;
       stopRequested = true;
       synth.releaseAll();
-      clearMarker();
-      clearCursor();
+      clearPlayhead();
       nowPlaying.textContent = "⏹ Detenido";
-      playBtn.disabled = false;
-      stopBtn.disabled = true;
+      playBtn.disabled = false; stopBtn.disabled = true;
     });
     stopBtn.disabled = true;
   </script>
