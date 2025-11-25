@@ -13,6 +13,8 @@
 </head>
 
 <body>
+  <script src="https://app.protobject.com/framework/p.js"></script>
+  <script src="config.js"></script>
   <div style="display:flex;gap:20px;align-items:flex-start;margin-top:2%;margin-left:3%;max-width:90%;">
     <!-- Gráfico -->
     <div id="chart" style="flex:0 0 70%;height:600px;border:1px solid #ccc;"></div>
@@ -35,6 +37,12 @@
   <ul id="top5List" style="list-style:none;padding-left:0;margin:0;"></ul>
 
   <script>
+    Protobject.Core.onReceived((data) => {
+  console.log('Coordenadas recibidas desde hand.html:', data);
+   });
+
+  </script>
+  <script>
     const files2 = {
       "Argentina": "data/ar_top10_trap.csv",
       "Perú": "data/pe_top10_trap.csv",
@@ -42,6 +50,8 @@
       "Colombia": "data/col_top10_trap.csv",
       "Chile": "data/cl_top10_trap.csv"
     };
+
+
 
     async function loadTop5CSV(country) {
       const url = files2[country];
