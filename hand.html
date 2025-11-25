@@ -18,15 +18,10 @@
             console.warn('Protobject o HandSensor no están disponibles todavía.');
           }
 
-          // Usar índice 0 por defecto (muchos dispositivos solo tienen una cámara)
-          // Si quieres elegir otra cámara cambia el segundo parámetro.
-      
-          // Iniciar HandSensor con la cámara trasera principal
-          Protobject.HandSensor.start(100, 3); //3 funciona en el cel 0 en el compu
 
+          Protobject.HandSensor.start(100, 3); 
 
-
-          // Mostrar la vista previa del video (tamaño razonable)
+          // Mostrar la vista previa del video 
           Protobject.HandSensor.showPreview({
             top: 0,
             left: 0,
@@ -34,8 +29,6 @@
             height: window.innerHeight 
           });
 
-
-          // No hacer flip por defecto (cambia a true si lo necesitas)
           Protobject.HandSensor.flip(false);
 
           
@@ -43,11 +36,7 @@
           // Enviar la posición del dedo índice (8) a index.html
           Protobject.HandSensor.onData((data) => {
             const indexFinger = data?.landmarks?.[0]?.[8];
-            if (indexFinger) {
-              //console.log('Coordenadas del dedo índice:', indexFinger);
-            } else {
-              //console.log('Hand detected pero sin landmarks aún');
-            }
+
             try {
               if (data && data.landmarks && data.landmarks[0] && data.landmarks[0][8]) {
                 Protobject.Core.send(data.landmarks[0][8]).to('index.html');
