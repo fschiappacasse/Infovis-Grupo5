@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hand sensor</title>
+  </head>
+  <body>
+    <script src="https://app.protobject.com/framework/p.js"></script>
+    <script src="config.js"></script>
+    <h1>Hand sensor</h1>
+
+    <script>
+      // Inicializar HandSensor de forma segura después de cargar la página
+      window.addEventListener('load', () => {
+        try {
+          if (typeof Protobject === 'undefined' || !Protobject.HandSensor) {
+            console.warn('Protobject o HandSensor no están disponibles todavía.');
+          }
+
+
+          Protobject.HandSensor.start(100, 3); 
+
+          // Mostrar la vista previa del video 
+          Protobject.HandSensor.showPreview({
+            top: 0,
+            left: 0,
+            width: window.innerWidth,  
+            height: window.innerHeight 
+          });
+
+          Protobject.HandSensor.flip(false);
+
+          
+
+          // Enviar la posición del dedo índice (8) a index.html
+          Protobject.HandSensor.onData((data) => {
+            const indexFinger = data?.landmarks?.[0]?.[8];
+
+            try {
+              if (data && data.landmarks && data.landmarks[0] && data.landmarks[0][8]) {
+                Protobject.Core.send(data.landmarks[0][8]).to('index.html');
+                console.log('Datos enviados al índice:', data.landmarks[0][8]);
+              }
+            } catch (e) {
+              console.error('Error procesando datos de HandSensor:', e);
+            }
+          });
+        } catch (err) {
+          console.error('Error iniciando HandSensor:', err);
+          const msg = document.createElement('div');
+          msg.textContent = 'HandSensor error: ' + (err && err.message ? err.message : err);
+          msg.style.color = 'red';
+          msg.style.padding = '8px';
+          document.body.appendChild(msg);
+        }
+      });
+
+    </script>
+  </body>
+</html>

@@ -12,6 +12,8 @@
 </head>
 
 <body>
+  <script src="https://app.protobject.com/framework/p.js"></script>
+  <script src="config.js"></script>
   <div style="display:flex;gap:20px;align-items:flex-start;margin-top:2%;margin-left:3%;max-width:90%;">
     <!-- Gráfico -->
     <div id="chart" style="flex:0 0 70%;height:600px;border:1px solid #ccc;"></div>
@@ -59,6 +61,8 @@
     </label>
   </div>
 
+  <ul id="top5List" style="list-style:none;padding-left:0;margin:0;"></ul>
+
 
   <script>
     const files2 = {
@@ -68,6 +72,8 @@
       "Colombia": "data/col_top10_trap.csv",
       "Chile": "data/cl_top10_trap.csv"
     };
+
+
 
     async function loadTop5CSV(country) {
       const url = files2[country];
@@ -347,7 +353,7 @@
       };
 
       // === Mostrar / ocultar países con checkboxes ===
-      function setCountryVisible(country, isVisible) {
+      window.setCountryVisible = function(country, isVisible) {
         const indices = [];
 
         gd.data.forEach((tr, idx) => {
@@ -512,6 +518,145 @@
     }
 
   </script>
+
+  <script>
+
+function isPointInPolygon(point, polygon) {
+  let inside = false;
+  const x = point.x, y = point.y;
+
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].x, yi = polygon[i].y;
+    const xj = polygon[j].x, yj = polygon[j].y;
+
+    const intersect =
+      ((yi > y) !== (yj > y)) &&
+      (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+}
+
+function findCountry(point) {
+
+  // Polígonos
+  const chile = [
+    { x: 0.388, y: 0.471 },
+    { x: 0.35, y: 0.52 },
+    { x: 0.384, y: 0.731 },
+    { x: 0.4047, y: 0.709 }
+  ];
+
+  const argentina = [
+    { x: 0.407, y: 0.4933 },
+    { x: 0.5340, y: 0.5020 },
+    { x: 0.50,  y: 0.6185 },
+    { x: 0.4994,y: 0.6077 },
+    { x: 0.4511,y: 0.7239 }
+  ];
+
+  const uruguay = [
+    { x: 0.5218, y: 0.5622 },
+    { x: 0.549,  y: 0.582 },
+    { x: 0.519,  y: 0.590 },
+    { x: 0.524,  y: 0.606 }
+  ];
+
+  const peru = [
+    { x: 0.26, y: 0.34 },
+    { x: 0.35, y: 0.356 },
+    { x: 0.28, y: 0.384 },
+    { x: 0.38, y: 0.42 },
+    { x: 0.38, y: 0.47 },
+    { x: 0.27, y: 0.44 },
+    { x: 0.24, y: 0.40 }
+  ];
+
+  const colombia = [
+    { x: 0.29, y: 0.26 },
+    { x: 0.35, y: 0.29 },
+    { x: 0.34, y: 0.35 },
+    { x: 0.285, y: 0.34 }
+
+  ];
+
+  const countries = [
+    { name: "Chile", polygon: chile },
+    { name: "Argentina", polygon: argentina },
+    { name: "Uruguay", polygon: uruguay },
+    { name: "Perú", polygon: peru },
+    { name: "Colombia", polygon: colombia }
+  ];
+
+  for (const country of countries) {
+    if (isPointInPolygon(point, country.polygon)) {
+      console.log("País detectado:", country.name);
+      return country.name;
+    }
+  }
+
+  return null;
+}
+
+
+let mapaCooldown = false;
+let ultimoPaisDetectado = null;
+let pais_seleccionado = null;
+
+Protobject.Core.onReceived((data) => {
+  if (mapaCooldown) return; 
+
+  const point = { x: data.x, y: data.y };
+  let detectedCountry = findCountry(point);
+
+
+  if (!detectedCountry) {
+    console.log("País nulo, usando último país:", ultimoPaisDetectado);
+    detectedCountry = ultimoPaisDetectado;
+  }
+
+  if (!detectedCountry) return;
+
+  if (pais_seleccionado === detectedCountry) return;
+
+  pais_seleccionado = detectedCountry;
+  ultimoPaisDetectado = detectedCountry;
+
+  console.log("País detectado (final):", detectedCountry);
+
+
+  // actualizar selector
+  const selector = document.getElementById("countrySelector");
+  selector.value = detectedCountry;
+  loadTop5CSV(detectedCountry);
+
+  const orderSelect = document.getElementById("countryOrder");
+  orderSelect.value = detectedCountry;
+
+  //sonificacion
+  playSampleForCountry(detectedCountry);
+
+
+  // mostrar en mapa
+  const selected = detectedCountry;
+
+  const checkboxes = document.querySelectorAll(".countryToggle");
+  checkboxes.forEach((cb) => {
+    cb.checked = cb.value === selected;
+    setCountryVisible(cb.value, cb.value === selected);
+  });
+
+
+  mapaCooldown = true;
+  setTimeout(() => {
+    mapaCooldown = false;
+  }, 350); 
+
+});
+
+</script>
 
 
 </body>
