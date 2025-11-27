@@ -15,10 +15,10 @@
   <script src="https://app.protobject.com/framework/p.js"></script>
   <script src="config.js"></script>
   <div style="display:flex;gap:20px;align-items:flex-start;margin-top:2%;margin-left:3%;max-width:90%;">
-    <!-- Gráfico -->
+
     <div id="chart" style="flex:0 0 70%;height:600px;border:1px solid #ccc;"></div>
 
-    <!-- Muestras de audio por país (pueden estar hidden) -->
+
     <audio id="audio-Chile" src="audio/chile_top5_mix.mp3"></audio>
     <audio id="audio-Argentina" src="audio/argentina_top5_mix.mp3"></audio>
     <audio id="audio-Uruguay" src="audio/uruguay_top5_mix.mp3"></audio>
@@ -26,7 +26,7 @@
     <audio id="audio-Colombia" src="audio/colombia_top5_mix.mp3"></audio>
 
 
-    <!-- Selector y top 5 -->
+
     <div style="flex:0 0 30%;padding:12px;border:1px solid #ccc;">
       <h2 style="margin-top:0;font-weight:normal;">Ver el top 5 histórico de canciones de trap </h2>
       <h5 style="margin-top:0;font-weight:normal;">💡 Haz click en una línea para ver y escuchar el trap de ese país
@@ -60,8 +60,6 @@
       <input type="checkbox" class="countryToggle" value="Colombia" checked> Colombia
     </label>
   </div>
-
-  <ul id="top5List" style="list-style:none;padding-left:0;margin:0;"></ul>
 
 
   <script>
@@ -123,6 +121,14 @@
       </div>
     </div>
     <div id="nowPlaying" style="margin-top:8px;color:#555;"></div>
+
+    <div style="margin-top:6px;">
+      <button id="pauseBtn"
+        style="padding:6px 12px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">
+        ⏸ Pausar / Reanudar
+      </button>
+    </div>
+
   </div>
 
 
@@ -240,7 +246,7 @@
         }
       }
 
-      // === Cursor como TRACE de línea (debajo del marcador) ===
+
       const CURSOR_TRACE_IDX = traces.length;
       traces.push({
         name: "_cursor",
@@ -252,7 +258,7 @@
         showlegend: false
       });
 
-      // === Marcador de reproducción ===
+
       const PLAY_MARKER_TRACE = traces.length;
       traces.push({
         name: "_playhead",
@@ -263,7 +269,7 @@
         showlegend: false
       });
 
-      // etiquetas al final de cada serie (opcional, conservadas)
+
       function darkenColor(hex, factor = 0.7) {
         const r = Math.floor(parseInt(hex.substr(1, 2), 16) * factor);
         const g = Math.floor(parseInt(hex.substr(3, 2), 16) * factor);
@@ -283,7 +289,7 @@
           };
         });
 
-      // Mapa país -> índice de su annotation de etiqueta (direct labeling)
+
       const labelAnnotationIndexByCountry = {};
       const baseAnnCount = annotations.length; // p.ej. la anotación del peak de Chile
 
@@ -353,7 +359,7 @@
       };
 
       // === Mostrar / ocultar países con checkboxes ===
-      window.setCountryVisible = function(country, isVisible) {
+      window.setCountryVisible = function (country, isVisible) {
         const indices = [];
 
         gd.data.forEach((tr, idx) => {
@@ -456,6 +462,7 @@
     const volSlider = document.getElementById("vol");
     const nowPlaying = document.getElementById("nowPlaying");
     const countryOrderSelect = document.getElementById("countryOrder");
+    const pauseBtn = document.getElementById("pauseBtn");
 
     let currentAudio = null;
 
@@ -517,146 +524,209 @@
       });
     }
 
+    function playSampleForCountry(country) {
+      const audio = AUDIO_BY_COUNTRY[country];
+      if (!audio) {
+        nowPlaying.textContent = `No hay muestra de audio para ${country}`;
+        return;
+      }
+
+      // Si ya está sonando este mismo país, no reiniciamos
+      if (currentAudio === audio && !audio.paused) {
+        return;
+      }
+
+      // Si había otro país sonando, lo detenemos
+      stopSample();
+
+      currentAudio = audio;
+      countryOrderSelect.value = country; // sincronizar selector
+      nowPlaying.textContent = `▶ Escuchando muestra de ${country}`;
+      audio.loop = true;
+      audio.play().catch(err => {
+        console.error("Error al reproducir audio:", err);
+        nowPlaying.textContent = "⚠️ No se pudo reproducir el audio";
+      });
+    }
+
+    if (pauseBtn) {
+      pauseBtn.addEventListener("click", () => {
+        if (!currentAudio) return;
+
+        if (currentAudio.paused) {
+          // Reanudar
+          currentAudio.play().then(() => {
+            nowPlaying.textContent = `▶ Escuchando muestra de ${countryOrderSelect.value}`;
+          }).catch(err => {
+            console.error("Error al reanudar audio:", err);
+            nowPlaying.textContent = "⚠️ No se pudo reanudar el audio";
+          });
+        } else {
+          // Pausar
+          currentAudio.pause();
+          nowPlaying.textContent = "⏸ Pausado";
+        }
+      });
+    }
+
+    /* 👇 AÑADE ESTO AQUÍ */
+    countryOrderSelect.addEventListener("change", (e) => {
+      const country = e.target.value;
+
+      // Cambiar el mix al país seleccionado
+      playSampleForCountry(country);
+
+      // Sincronizar el panel derecho (top 5)
+      const uiSelector = document.getElementById("countrySelector");
+      if (uiSelector && uiSelector.value !== country) {
+        uiSelector.value = country;
+        if (typeof loadTop5CSV === "function") {
+          loadTop5CSV(country);
+        }
+      }
+    });
+
+
   </script>
 
   <script>
 
-function isPointInPolygon(point, polygon) {
-  let inside = false;
-  const x = point.x, y = point.y;
+    function isPointInPolygon(point, polygon) {
+      let inside = false;
+      const x = point.x, y = point.y;
 
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i].x, yi = polygon[i].y;
-    const xj = polygon[j].x, yj = polygon[j].y;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].x, yi = polygon[i].y;
+        const xj = polygon[j].x, yj = polygon[j].y;
 
-    const intersect =
-      ((yi > y) !== (yj > y)) &&
-      (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+        const intersect =
+          ((yi > y) !== (yj > y)) &&
+          (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
 
-    if (intersect) inside = !inside;
-  }
+        if (intersect) inside = !inside;
+      }
 
-  return inside;
-}
-
-function findCountry(point) {
-
-  // Polígonos
-  const chile = [
-    { x: 0.388, y: 0.471 },
-    { x: 0.35, y: 0.52 },
-    { x: 0.384, y: 0.731 },
-    { x: 0.4047, y: 0.709 }
-  ];
-
-  const argentina = [
-    { x: 0.407, y: 0.4933 },
-    { x: 0.5340, y: 0.5020 },
-    { x: 0.50,  y: 0.6185 },
-    { x: 0.4994,y: 0.6077 },
-    { x: 0.4511,y: 0.7239 }
-  ];
-
-  const uruguay = [
-    { x: 0.5218, y: 0.5622 },
-    { x: 0.549,  y: 0.582 },
-    { x: 0.519,  y: 0.590 },
-    { x: 0.524,  y: 0.606 }
-  ];
-
-  const peru = [
-    { x: 0.26, y: 0.34 },
-    { x: 0.35, y: 0.356 },
-    { x: 0.28, y: 0.384 },
-    { x: 0.38, y: 0.42 },
-    { x: 0.38, y: 0.47 },
-    { x: 0.27, y: 0.44 },
-    { x: 0.24, y: 0.40 }
-  ];
-
-  const colombia = [
-    { x: 0.29, y: 0.26 },
-    { x: 0.35, y: 0.29 },
-    { x: 0.34, y: 0.35 },
-    { x: 0.285, y: 0.34 }
-
-  ];
-
-  const countries = [
-    { name: "Chile", polygon: chile },
-    { name: "Argentina", polygon: argentina },
-    { name: "Uruguay", polygon: uruguay },
-    { name: "Perú", polygon: peru },
-    { name: "Colombia", polygon: colombia }
-  ];
-
-  for (const country of countries) {
-    if (isPointInPolygon(point, country.polygon)) {
-      console.log("País detectado:", country.name);
-      return country.name;
+      return inside;
     }
-  }
 
-  return null;
-}
+    function findCountry(point) {
+
+      // Polígonos
+      const chile = [
+        { x: 0.388, y: 0.471 },
+        { x: 0.35, y: 0.52 },
+        { x: 0.384, y: 0.731 },
+        { x: 0.4047, y: 0.709 }
+      ];
+
+      const argentina = [
+        { x: 0.407, y: 0.4933 },
+        { x: 0.5340, y: 0.5020 },
+        { x: 0.50, y: 0.6185 },
+        { x: 0.4994, y: 0.6077 },
+        { x: 0.4511, y: 0.7239 }
+      ];
+
+      const uruguay = [
+        { x: 0.5218, y: 0.5622 },
+        { x: 0.549, y: 0.582 },
+        { x: 0.519, y: 0.590 },
+        { x: 0.524, y: 0.606 }
+      ];
+
+      const peru = [
+        { x: 0.26, y: 0.34 },
+        { x: 0.35, y: 0.356 },
+        { x: 0.28, y: 0.384 },
+        { x: 0.38, y: 0.42 },
+        { x: 0.38, y: 0.47 },
+        { x: 0.27, y: 0.44 },
+        { x: 0.24, y: 0.40 }
+      ];
+
+      const colombia = [
+        { x: 0.29, y: 0.26 },
+        { x: 0.35, y: 0.29 },
+        { x: 0.34, y: 0.35 },
+        { x: 0.285, y: 0.34 }
+
+      ];
+
+      const countries = [
+        { name: "Chile", polygon: chile },
+        { name: "Argentina", polygon: argentina },
+        { name: "Uruguay", polygon: uruguay },
+        { name: "Perú", polygon: peru },
+        { name: "Colombia", polygon: colombia }
+      ];
+
+      for (const country of countries) {
+        if (isPointInPolygon(point, country.polygon)) {
+          console.log("País detectado:", country.name);
+          return country.name;
+        }
+      }
+
+      return null;
+    }
 
 
-let mapaCooldown = false;
-let ultimoPaisDetectado = null;
-let pais_seleccionado = null;
+    let mapaCooldown = false;
+    let ultimoPaisDetectado = null;
+    let pais_seleccionado = null;
 
-Protobject.Core.onReceived((data) => {
-  if (mapaCooldown) return; 
+    Protobject.Core.onReceived((data) => {
+      if (mapaCooldown) return;
 
-  const point = { x: data.x, y: data.y };
-  let detectedCountry = findCountry(point);
-
-
-  if (!detectedCountry) {
-    console.log("País nulo, usando último país:", ultimoPaisDetectado);
-    detectedCountry = ultimoPaisDetectado;
-  }
-
-  if (!detectedCountry) return;
-
-  if (pais_seleccionado === detectedCountry) return;
-
-  pais_seleccionado = detectedCountry;
-  ultimoPaisDetectado = detectedCountry;
-
-  console.log("País detectado (final):", detectedCountry);
+      const point = { x: data.x, y: data.y };
+      let detectedCountry = findCountry(point);
 
 
-  // actualizar selector
-  const selector = document.getElementById("countrySelector");
-  selector.value = detectedCountry;
-  loadTop5CSV(detectedCountry);
+      if (!detectedCountry) {
+        console.log("País nulo, usando último país:", ultimoPaisDetectado);
+        detectedCountry = ultimoPaisDetectado;
+      }
 
-  const orderSelect = document.getElementById("countryOrder");
-  orderSelect.value = detectedCountry;
+      if (!detectedCountry) return;
 
-  //sonificacion
-  playSampleForCountry(detectedCountry);
+      if (pais_seleccionado === detectedCountry) return;
 
+      pais_seleccionado = detectedCountry;
+      ultimoPaisDetectado = detectedCountry;
 
-  // mostrar en mapa
-  const selected = detectedCountry;
-
-  const checkboxes = document.querySelectorAll(".countryToggle");
-  checkboxes.forEach((cb) => {
-    cb.checked = cb.value === selected;
-    setCountryVisible(cb.value, cb.value === selected);
-  });
+      console.log("País detectado (final):", detectedCountry);
 
 
-  mapaCooldown = true;
-  setTimeout(() => {
-    mapaCooldown = false;
-  }, 350); 
+      // actualizar selector
+      const selector = document.getElementById("countrySelector");
+      selector.value = detectedCountry;
+      loadTop5CSV(detectedCountry);
 
-});
+      const orderSelect = document.getElementById("countryOrder");
+      orderSelect.value = detectedCountry;
 
-</script>
+      //sonificacion
+      playSampleForCountry(detectedCountry);
+
+
+      // mostrar en mapa
+      const selected = detectedCountry;
+
+      const checkboxes = document.querySelectorAll(".countryToggle");
+      checkboxes.forEach((cb) => {
+        cb.checked = cb.value === selected;
+        setCountryVisible(cb.value, cb.value === selected);
+      });
+
+
+      mapaCooldown = true;
+      setTimeout(() => {
+        mapaCooldown = false;
+      }, 350);
+
+    });
+
+  </script>
 
 
 </body>
